@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>ToDo List</title>
+  </head>
+  <body>
+    <div class="todo">
+      <h2 class="todo__title">ToDos</h2>
+      <div class="todo__body">
+        <input
+          type="text"
+          class="todo__new-task"
+          placeholder="What should be done?"
+        />
+        <button class="todo__add">&#9660;</button>
+        <div class="todo__list">
+        </div>
+        <div class="todo__footer">
+          <div class="todo__remainder">0 tasks left</div>
+          <div class="todo__filters">
+            <button class="todo__filters-btn" data-filter="all">All</button>
+            <button class="todo__filters-btn" data-filter="active">Active</button>
+            <button class="todo__filters-btn" data-filter="completed">Completed</button>
+          </div>
+          <button class="todo__clear">Clear completed</button> <!--данный батон появится только если появится выполненный таск-->
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
