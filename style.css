@@ -91,6 +91,7 @@ body {
   padding: 0 10px;
   gap: 20px;
   border: 1px solid #3f3c3c1f;
+  list-style-type: none;
 }
 .todo__task:hover .todo__remove {
   visibility: visible;
@@ -141,10 +142,10 @@ body {
   font-size: 70px;
   color: #3f3c3c83;
   visibility: hidden;
-  transition: font-size .3s;
+  transition: all .3s;
 }
 .todo__remove:hover {
-  font-size: 90px;
+  transform: scale(1.2);
 }
 
 .todo__footer {

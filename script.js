@@ -1,116 +1,171 @@
 "use strict";
 
-document.addEventListener("DOMContentLoaded", () => {
-  const tasksList = document.querySelector(".todo__list"),
-        input = document.querySelector(".todo__new-task"),
-        btnAddTask = document.querySelector(".todo__add"),
-        countToDos = document.querySelector(".todo__remainder"),
-        filterAll = document.querySelector("[data-filter='all']"),
-        filterActive = document.querySelector("[data-filter='active']"),
-        filterCompleted = document.querySelector("[data-filter='completed']"),
-        btnReset = document.querySelector(".todo__clear");
+/* 
+---подключение работы с localstorage для сохранения тасков
 
-  let newTask,
-      countTasks = 0,
-      allTasks,
-      completedTasks;
+--- рефакторинг кода - перемещение объявления переменных в определенные блоки, чтобы не приходилось скроллить для поиска названия перменных)
+*/
 
-  input.addEventListener("input", (e) => {
-    e.preventDefault();
-    
-    newTask = document.querySelector(".todo__new-task").value;
+const tasksList = document.querySelector(".todo__list"),
+  form = document.querySelector("#form"),
+  taskInput = document.querySelector("#taskInput"),
+  btnAddTask = document.querySelector(".todo__add"),
+  countActiveTasks = document.querySelector("#counter"),
+  btnResetCompleted = document.querySelector(".todo__clear");
 
-    addVisibleBtnAdd();
+let counterActive = 0,
+    counterCompleted = 0;
+countActiveTasks.innerHTML = counterActive;
+
+function increaseCounterTasks() {
+  countActiveTasks.innerHTML = ++counterActive;
+}
+
+function decreaseCounterTasks() {
+  countActiveTasks.innerHTML = --counterActive;
+}
+
+function showBtnResetCompleted() {
+  if (counterCompleted > 0) {
+    btnResetCompleted.classList.add("todo__clear_active");
+  } else if (counterCompleted <= 0) {
+    btnResetCompleted.classList.remove("todo__clear_active");
+  }
+}
+
+// add new task
+
+form.addEventListener("submit", addTask);
+form.addEventListener("input", showBtnAddTask);
+btnAddTask.addEventListener("click", addTask);
+
+function addTask(e) {
+  e.preventDefault();
+  
+  const newTask = document.createElement("li");
+  const taskText = taskInput.value;
+
+  if (taskText == '') {
+    return;
+  }
+
+  newTask.classList.add("todo__task");
+  newTask.innerHTML = `
+    <button class="todo__complete">&#128504;</button>
+    <div class="todo__text">${taskText}</div>
+    <button class="todo__remove">&times;</button>
+  `;
+
+  tasksList.append(newTask);
+  form.reset();
+  showBtnAddTask();
+  increaseCounterTasks();
+}
+
+function showBtnAddTask() {
+  let taskText = taskInput.value;
+  if (taskText.length > 0) {
+    btnAddTask.classList.add("todo__add_active");
+  } else {
+    btnAddTask.classList.remove("todo__add_active");
+  }
+}
+
+// remove tasks
+
+tasksList.addEventListener("click", removeTask);
+
+function removeTask(e) {
+  if (e.target && e.target.classList.contains("todo__remove")) {
+    const parentNode = e.target.closest(".todo__task");
+
+    parentNode.remove();
+
+    decreaseCounterTasks();
+  }
+}
+
+// complete task 
+
+tasksList.addEventListener("click", completeTask);
+
+function completeTask(e) {
+  if (e.target && e.target.classList.contains("todo__complete")) {
+    const parentNode = e.target.closest(".todo__task");
+
+    parentNode.classList.add("todo__task_completed");
+    counterCompleted++;
+    decreaseCounterTasks();
+    showBtnResetCompleted();
+  }
+}
+
+// reset completed tasks
+
+btnResetCompleted.addEventListener("click", () => {
+  const allCompletedTasks = document.querySelectorAll(".todo__task.todo__task_completed")
+  
+  allCompletedTasks.forEach((task) => {
+    task.remove();
   });
 
-  function addVisibleBtnAdd() {
-    if (newTask !== "") {
-      btnAddTask.classList.add("todo__add_active");
-    } else {
-      btnAddTask.classList.remove("todo__add_active");
-    }
-  }
+  counterCompleted = 0;
+  showBtnResetCompleted();
+});
 
-  function createNewTask(task) {
-    const item = document.createElement('div');
+// working with filters
 
-    item.classList.add("todo__task");
-    item.innerHTML = `
-    <button class="todo__complete">&#128504;</button>
-    <div class="todo__text">${task}</div>
-    <button class="todo__remove">&times;</button>
-    `;
-    tasksList.append(item);
-  }
+const filterAll = document.querySelector("[data-filter='all']"),
+  filterActive = document.querySelector("[data-filter='active']"),
+  filterCompleted = document.querySelector("[data-filter='completed']");
 
-  function addNewTask() {
-    btnAddTask.addEventListener("click", (e) => {
-      e.preventDefault();
-  
-      if (newTask !== "") {
-        createNewTask(newTask);
-        changeRemainderTasks();
-        input.value = "";
-        newTask = "";
-        addVisibleBtnAdd();
-        changeTask();
-      }
-    });
+filterAll.addEventListener("click", (e) => {
+  const activeTasks = document.querySelectorAll(".todo__task"),
+        completedTasks = document.querySelectorAll(".todo__task.todo__task_completed");
 
-    input.addEventListener("keydown", (e) => {
-      if (e.key == "Enter" && newTask !== "") {
-        createNewTask(newTask);
-        changeRemainderTasks();
-        input.value = "";
-        newTask = "";
-        addVisibleBtnAdd();
-        changeTask();
-      }
-    });
-  }
+  activeTasks.forEach((task) => {
+    task.style.display = "flex";
+  });
 
-  addNewTask();
-  
-  function changeRemainderTasks() {
-    countTasks++;
-    countToDos.innerHTML = `${countTasks} tasks left`;
-  }
+  completedTasks.forEach((task) => {
+    task.style.display = "flex";
+  });
 
-  function changeTask() {
-    allTasks = document.querySelectorAll(".todo__task");
+  filterCompleted.classList.remove("todo__filters-btn_active");
+  filterActive.classList.remove("todo__filters-btn_active");
+  filterAll.classList.add("todo__filters-btn_active");
+});
 
-    function removeTask() {
-      allTasks.forEach((task, i) => {
-        const btnRemoveTask = task.querySelector(".todo__remove");
+filterActive.addEventListener("click", () => {
+  // при выполнении задачи при активности фильтра, эта задача должна сразу же скрываться
+  const activeTasks = document.querySelectorAll(".todo__task"),
+        completedTasks = document.querySelectorAll(".todo__task.todo__task_completed");
 
-        btnRemoveTask.addEventListener("click", () => {
-          allTasks[i].remove();
-        });
-      });
-    }
+  activeTasks.forEach((task) => {
+    task.style.display = "flex";
+  });
 
-    function completeTask() {
-      allTasks.forEach((task, i) => {
-        const btnCompleteTask = task.querySelector(".todo__complete");
+  completedTasks.forEach((task) => {
+    task.style.display = "none";
+  });
 
-        btnCompleteTask.addEventListener("click", () => {
-          allTasks[i].classList.add("todo__task_completed");
+  filterCompleted.classList.remove("todo__filters-btn_active");
+  filterActive.classList.add("todo__filters-btn_active");
+});
 
-          showBtnResetCompletedTasks();
-        });
-      });
-    }
+filterCompleted.addEventListener("click", () => {
+  // нужно ли функционировать фильтру при отсутствии выполненных тасков
+  const activeTasks = document.querySelectorAll(".todo__task"),
+        completedTasks = document.querySelectorAll(".todo__task.todo__task_completed");
 
-    function showBtnResetCompletedTasks() {
-      completedTasks = tasksList.querySelectorAll(".todo__task_completed");
+  activeTasks.forEach((task) => {
+    task.style.display = "none";
+  });
 
-      if (completedTasks.length > 0) {
-        btnReset.classList.add("todo__clear_active");
-      }
-    }
+  completedTasks.forEach((task) => {
+    task.style.display = "flex";
+  });
 
-    removeTask();
-    completeTask();
-  }
-
+  filterActive.classList.remove("todo__filters-btn_active");
+  filterCompleted.classList.add("todo__filters-btn_active");
 });
